@@ -9,32 +9,44 @@ import os
 import openpyxl
 from rich.console import Console
 
-from utils.utils import jsonFileToDate
+from utils.utils import jsonFileToDate, get_knowledge_base_path
 import pandas as pd
 
 # 设置控制台的宽度
 console = Console(width=150)
 
 
-def get_city_scene(province_name: str, city_name: str) -> list:
-    path = os.path.dirname(os.path.abspath(__file__))
-    path = os.path.join(path, "..\\CtripSpider\\data", province_name, city_name)
+def get_city_scene_knowledge(province_name: str, city_name: str) -> list:
+    """从 knowledge 目录获取景区列表"""
+    path = get_knowledge_base_path()
+    path = os.path.join(path, province_name, city_name)
+    if not os.path.exists(path):
+        return []
     files = os.listdir(path)
     scene_list = []
     for file_name in files:
-        scene_list.append({
-            "name": file_name,
-            "path": os.path.join(path, file_name)
-        })
+        scene_path = os.path.join(path, file_name)
+        if os.path.isdir(scene_path):
+            scene_list.append({
+                "name": file_name,
+                "path": scene_path
+            })
     return scene_list
 
 
 def read_excel_to_data(path: str, scene_name: str) -> list:
-    _path = os.path.join(path, f"{scene_name}.xlsx")
-    if not os.path.exists(_path):
-        return []
-    data = pd.read_excel(_path).to_dict(orient='records')
-    return data
+    # 尝试多种可能的文件名格式
+    possible_files = [
+        f"{scene_name}.xlsx",
+        f"{scene_name}_评论.xlsx",
+        f"{scene_name}_comments.xlsx",
+    ]
+    for filename in possible_files:
+        _path = os.path.join(path, filename)
+        if os.path.exists(_path):
+            data = pd.read_excel(_path).to_dict(orient='records')
+            return data
+    return []
 
 
 def get_all_excel_file_data():
@@ -45,12 +57,16 @@ def get_all_excel_file_data():
 
     scene_total = 0
     scene_fail_total = 0
+    knowledge_path = get_knowledge_base_path()
+
+    console.print(f"[green]Knowledge 目录路径: {knowledge_path}[/green]", style="bold green")
+
     for province in all_province_city["city"]:
         console.rule(f"[blue]统计{province['name']}的数据")
         province_comment_total = 0
         for city in province["city"]:
             console.rule(f"[green]开始统计{city['name']}的景区信息", characters="+")
-            all_scene = get_city_scene(province['name'], city['name'])
+            all_scene = get_city_scene_knowledge(province['name'], city['name'])
             for scene in all_scene:
                 console.print(f"[yellow]开始获取{scene['name']}的景区评论信息")
                 comment_scene = read_excel_to_data(scene['path'], scene['name'])

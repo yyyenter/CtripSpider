@@ -11,16 +11,18 @@ from openpyxl.styles import Font
 from openpyxl.utils import get_column_letter
 from rich.console import Console
 
+from utils.utils import get_scene_data_path
+
 
 def generate_excel(province: str, city: str, scene_name: str, comment: list, console: Console) -> None:
     """
-    根据评论创建exile文件
+    根据评论创建exile文件，保存到 knowledge 目录
     :return:
     """
     fail_count = 0
-    script_path = os.path.abspath(__file__)
-    grandparent_dir = os.path.dirname(os.path.dirname(script_path))
-    path_file = os.path.join(grandparent_dir, "data", province, city, scene_name)
+
+    # 使用 knowledge 目录路径
+    path_file = get_scene_data_path(province, city, scene_name)
 
     # 创建景区文件夹
     os.makedirs(path_file, exist_ok=True)
@@ -51,7 +53,7 @@ def generate_excel(province: str, city: str, scene_name: str, comment: list, con
     console.print(f"爬取评论结果：[red]失败数：{fail_count}[/red]，成功数：{len(comment) - fail_count}，共计：{len(comment)}", style="bold green")
     try:
         wb.save(path_excel)
-        console.print(f"评论数据成功保存到 “{path_excel}”", style="bold green")
+        console.print(f"评论数据成功保存到 knowledge/{province}/{city}/{scene_name}/{scene_name}.xlsx", style="bold green")
     except Exception as e:
         console.print(f"评论数据保存失败：{e}", style="bold red")
 
