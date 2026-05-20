@@ -1,6 +1,8 @@
 # 爬取指定省份内的所有地区景点的评论数据
-# AREAS = ['云南', '四川', '贵州']  # 指定省份，None 表示爬取所有省份
 import os
+from dotenv import load_dotenv
+load_dotenv()  # 加载当前项目下的 .env 文件
+
 AREAS = os.getenv("CSPIDER_AREAS")
 if AREAS:
     try:
